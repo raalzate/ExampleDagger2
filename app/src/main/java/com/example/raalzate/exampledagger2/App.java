@@ -3,37 +3,51 @@ package com.example.raalzate.exampledagger2;
 import android.app.Application;
 import android.content.Context;
 
-import com.example.raalzate.exampledagger2.di.components.DaggerGitHubComponent;
+import com.activeandroid.ActiveAndroid;
+import com.example.raalzate.exampledagger2.di.components.ApiComponent;
+import com.example.raalzate.exampledagger2.di.components.DaggerApiComponent;
 import com.example.raalzate.exampledagger2.di.components.DaggerNetComponent;
-import com.example.raalzate.exampledagger2.di.components.GitHubComponent;
 import com.example.raalzate.exampledagger2.di.components.NetComponent;
 import com.example.raalzate.exampledagger2.di.modules.GitHubModule;
 import com.example.raalzate.exampledagger2.di.modules.AppModule;
 import com.example.raalzate.exampledagger2.di.modules.NetModule;
+import com.facebook.stetho.Stetho;
+
 
 /**
  * Created by raul-alzate on 3/06/16.
  */
 public class App extends Application {
     private NetComponent netComponent;
-    private GitHubComponent apiGitHubComponent;
+    private ApiComponent apiScopeComponent;
 
     @Override
     public void onCreate() {
         super.onCreate();
-
-       netComponent = DaggerNetComponent.builder()
+        initORM();
+        initStetho();
+        netComponent = DaggerNetComponent.builder()
                 .appModule(new AppModule(this))
                 .netModule(new NetModule("https://api.github.com"))
                 .build();
 
-        apiGitHubComponent = DaggerGitHubComponent.builder()
+        apiScopeComponent = DaggerApiComponent.builder()
                 .netComponent(netComponent)
                 .gitHubModule(new GitHubModule())
                 .build();
     }
 
-    public static GitHubComponent getComponent(Context context) {
-        return ((App) context.getApplicationContext()).apiGitHubComponent;
+    private void initStetho(){
+        Stetho.initialize(Stetho.newInitializerBuilder(this)
+                .enableWebKitInspector(Stetho.defaultInspectorModulesProvider(this))
+                .build());
+    }
+
+    private void initORM(){
+        ActiveAndroid.initialize(this);
+    }
+
+    public static ApiComponent getComponent(Context context) {
+        return ((App) context.getApplicationContext()).apiScopeComponent;
     }
 }

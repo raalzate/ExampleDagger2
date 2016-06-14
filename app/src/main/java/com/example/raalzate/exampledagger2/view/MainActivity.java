@@ -2,10 +2,13 @@ package com.example.raalzate.exampledagger2.view;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.support.annotation.VisibleForTesting;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.view.View;
 
 import com.example.raalzate.exampledagger2.App;
 import com.example.raalzate.exampledagger2.R;
@@ -13,6 +16,8 @@ import com.example.raalzate.exampledagger2.api.GitHubApiInterface;
 import com.example.raalzate.exampledagger2.model.RepositoryPOJO;
 
 import java.util.ArrayList;
+import java.util.Map;
+
 import javax.inject.Inject;
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -40,13 +45,26 @@ public class MainActivity extends AppCompatActivity {
 
         setSupportActionBar(mToolbar);
 
-        mAdapter = new RepositoryAdapter(getBaseContext());
+        mAdapter = new RepositoryAdapter(getBaseContext(), new RepositoryAdapter.OnClickItemListener() {
+            @Override
+            public void onClick(View view, int position) {
+                RepositoryPOJO repositoryPOJO = mAdapter.getItemByPosition(position);
+                Snackbar.make(view, repositoryPOJO.getName(),
+                        Snackbar.LENGTH_SHORT).show();
+            }
+        });
         mRepositories.setLayoutManager(new LinearLayoutManager(this));
         mRepositories.setAdapter(mAdapter);
 
         App.getComponent(getBaseContext()).inject(MainActivity.this);
 
     }
+
+    public void setDataAdapter(ArrayList<RepositoryPOJO> data) {
+        mAdapter.setData(data);
+        mAdapter.notifyDataSetChanged();
+    }
+
 
     @Override
     protected void onStart() {
@@ -62,10 +80,8 @@ public class MainActivity extends AppCompatActivity {
             public void onResponse(Call<ArrayList<RepositoryPOJO>> call,
                                    Response<ArrayList<RepositoryPOJO>> response) {
                 if(response.isSuccessful()) {
-                    mAdapter.setData(response.body());
-                    mAdapter.notifyDataSetChanged();
+                   setDataAdapter(response.body());
                 }
-
             }
 
             @Override
